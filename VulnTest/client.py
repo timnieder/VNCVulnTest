@@ -3,7 +3,7 @@ from dataclasses import field
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes # pip install cryptography
 import pyDes # pyDes.py
 from typing import Any, Callable, ClassVar, Collection, Iterator, List, Optional, Tuple, cast
-import time
+from tabulate import tabulate
 
 host = "192.168.182.5"
 port = 5900
@@ -266,14 +266,93 @@ tests = [
     outOfOrderSecurity
 ]
 
-from tabulate import tabulate
+async def authBypassTest(func, times = 5, sleepTime = 2):
+    disconnected = False
+    client = Client()
+    w,h = 800,600
+    try:
+        w,h = await func(client)
+        if client.writer.is_closing(): # check if its closed after our function
+            raise Exception("closing after func")
+    except Exception as e:
+        print(f"Exception during func: {e}")
+    
+    try:
+        for i in range(times): # request frame updates
+            print("tick")
+            await client.framebufferUpdateRequest(False, 0, 0, w, h)
+            # read image?
+            await sleep(sleepTime)
+            if client.writer.is_closing():
+                raise Exception("closing")
+    except Exception as e:
+        print(f"Exception: {e}")
+        disconnected = True
+    
+    client.writer.close()
+    await client.disconnect()
+    return disconnected
+
+async def authBypassNothing(client: Client):
+    await client.connect(host, port)
+    return 800,600
+
+async def authBypassInit(client: Client):
+    await client.connect(host, port)
+    await client.clientInit()
+    return await client.ServerInit()
+
+async def authBypassIntro(client: Client):
+    await client.connect(host, port)
+    await client.intro()
+    return 800,600
+
+async def authBypassIntroInit(client: Client):
+    await client.connect(host, port)
+    await client.intro()
+    await client.clientInit()
+    return await client.ServerInit()
+
+async def authBypassHalfSecurity(client: Client):
+    await client.connect(host, port)
+    await client.intro()
+    # only the first part of the handshake
+    numberOfTypes = await read_int(client.reader, 1)
+    auth_types = set(await client.reader.readexactly(numberOfTypes))
+    auth_type = int(2)
+    client.writer.write(auth_type.to_bytes(1, 'big'))
+    await client.clientInit()
+    return await client.ServerInit()
+
+authBypassTests = [
+    authBypassNothing,
+    authBypassInit,
+    authBypassIntro,
+    authBypassIntroInit,
+    authBypassHalfSecurity
+]
 async def main():
+    #print("Tests:")
+    #results = []
+    #for t in tests:
+    #    name = t.__qualname__
+    #    print(name)
+    #    results.append([name, await test(t)])
+    #    await sleep(1)
+    #print(tabulate(results, headers=["Function", "Still running?"], tablefmt="grid"))
+
+    print("Auth Bypass Tests")
     results = []
-    for t in tests:
+    for t in authBypassTests:
         name = t.__qualname__
         print(name)
-        results.append([name, await test(t)])
+        result = True
+        try:
+            result = await authBypassTest(t)
+        except Exception as e:
+            print(f"Exception auth bypass test: {e}")
+        results.append([name, result])
         await sleep(1)
-    print(tabulate(results, headers=["Function", "Result"], tablefmt="grid"))
+    print(tabulate(results, headers=["Function", "Disconnected"], tablefmt="grid"))
 
-run(main()) # TODO
+run(main())
