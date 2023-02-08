@@ -1,7 +1,7 @@
 from asyncio import StreamReader, StreamWriter, open_connection, run, sleep
 from dataclasses import field
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes # pip install cryptography
-import pyDes # pyDes.py
+from rfbDes import RFBDes # rfbDes.py
 from typing import Any, Callable, ClassVar, Collection, Iterator, List, Optional, Tuple, cast
 from tabulate import tabulate
 
@@ -15,7 +15,7 @@ async def read_int(reader: StreamReader, length: int) -> int:
 
     return int.from_bytes(await reader.readexactly(length), 'big')
 
-async def read_text(reader: StreamReader, encoding: str) -> str:
+async def read_text(reader: StreamReader, encoding: str = "latin-1") -> str:
     """
     Reads, unpacks, and returns length-prefixed text.
     """
@@ -23,18 +23,6 @@ async def read_text(reader: StreamReader, encoding: str) -> str:
     length = await read_int(reader, 4)
     data = await reader.readexactly(length)
     return data.decode(encoding)
-
-class RFBDes(pyDes.des):
-    def setKey(self, key: bytes) -> None:
-        """RFB protocol for authentication requires client to encrypt
-           challenge sent by server with password using DES method. However,
-           bits in each byte of the password are put in reverse order before
-           using it as encryption key."""
-        newkey = bytes(
-            sum((128 >> i) if (k & (1 << i)) else 0 for i in range(8))
-            for k in key
-        )
-        super().setKey(newkey)
 
 class Client:
     reader: StreamReader = field(repr=False)
@@ -89,7 +77,7 @@ class Client:
             return True
         elif auth_result == 1:
             print("auth failed")
-            reason = await read_text(self.reader, "latin-1")
+            reason = await read_text(self.reader)
             print(f"reason: {reason}")
             return False
         else:
@@ -112,8 +100,6 @@ class Client:
     async def framebufferUpdateRequest(self, incremental:bool, x:int, y:int, w:int, h:int):
         message_type = int(3)
         self.writer.write(message_type.to_bytes(1, "big"))
-        padding = int(0)
-        self.writer.write(padding.to_bytes(1, "big"))
         self.writer.write(incremental.to_bytes(1, "big"))
         self.writer.write(x.to_bytes(2, "big"))
         self.writer.write(y.to_bytes(2, "big"))
@@ -167,7 +153,7 @@ class Client:
         blueShift = await read_int(self.reader, 1)
         padding = await self.reader.readexactly(3)
 
-        name = await read_text(self.reader, "latin-1")
+        name = await read_text(self.reader)
 
         return w,h
 
@@ -289,7 +275,6 @@ async def authBypassTest(func, times = 5, sleepTime = 2):
         print(f"Exception: {e}")
         disconnected = True
     
-    client.writer.close()
     await client.disconnect()
     return disconnected
 
@@ -332,14 +317,18 @@ authBypassTests = [
     authBypassHalfSecurity
 ]
 async def main():
-    #print("Tests:")
-    #results = []
-    #for t in tests:
-    #    name = t.__qualname__
-    #    print(name)
-    #    results.append([name, await test(t)])
-    #    await sleep(1)
-    #print(tabulate(results, headers=["Function", "Still running?"], tablefmt="grid"))
+    print("Tests:")
+    results = []
+    for t in tests:
+        name = t.__qualname__
+        print(name)
+        result = False
+        try:
+            result = results.append([name, await test(t)])
+        except Exception as e:
+            print(f"Exception during test: {e}")
+        await sleep(1)
+    print(tabulate(results, headers=["Function", "Still running?"], tablefmt="grid"))
 
     print("Auth Bypass Tests")
     results = []
@@ -350,7 +339,7 @@ async def main():
         try:
             result = await authBypassTest(t)
         except Exception as e:
-            print(f"Exception auth bypass test: {e}")
+            print(f"Exception during auth bypass test: {e}")
         results.append([name, result])
         await sleep(1)
     print(tabulate(results, headers=["Function", "Disconnected"], tablefmt="grid"))
