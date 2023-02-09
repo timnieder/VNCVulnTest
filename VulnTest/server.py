@@ -6,6 +6,7 @@ from typing import Any, Callable, ClassVar, Collection, Iterator, List, Optional
 from tabulate import tabulate
 import secrets
 from helper import read_bool, read_int, read_text, text2bytes
+from const import SecurityResult, SecurityTypes
 
 class PixelFormat:
     bitsPerPixel: int = field()
@@ -99,6 +100,7 @@ class Server:
     width: int = field()
     height: int = field()
     pixelFormat: PixelFormat = field()
+    server = field()
 
     def __init__(self, w: int, h: int, format: PixelFormat) -> None:
         self.width = w
@@ -106,30 +108,36 @@ class Server:
         self.pixelFormat = format
 
     async def listen(self, callback, host = "127.0.0.1", port = 5900):
-        server = await start_server(callback, host, port)
+        self.server = await start_server(callback, host, port)
         print(f"serving on {host}:{port}")
-        async with server:
-            await server.serve_forever()
+        async with self.server:
+            await self.server.serve_forever()
+    
+    async def disconnect(self):
+        if not self.writer.is_closing():
+            self.writer.close()
+            await self.writer.wait_closed()
 
-    async def intro(self):
-        self.writer.write(b'RFB 003.008\n')
+    async def intro(self, bytes=b'RFB 003.008\n') -> bool:
+        self.writer.write(bytes)
         intro = await self.reader.readline()
         if intro[:4] != b'RFB ':
-            raise ValueError(f'not a VNC client: {intro}')
+            return False
+        return True
 
-    async def security(self, num, encodings: Collection[int]) -> int:
+    async def security(self, num, types: Collection[SecurityTypes]) -> int:
         msg = bytes()
         msg += num.to_bytes(1, "big")
-        for encoding in encodings:
-            msg += encoding.to_bytes(1, "big")
+        for type in types:
+            msg += int(type).to_bytes(1, "big")
         self.writer.write(msg)
         return await read_int(self.reader, 1)
     
-    async def failedSecurity(self, num, encodings: Collection[int], reasonLength, reason):
+    async def failedSecurity(self, num, types: Collection[SecurityTypes], reasonLength, reason):
         msg = bytes()
         msg += num.to_bytes(1, "big")
-        for encoding in encodings:
-            msg += encoding.to_bytes(1, "big")
+        for type in types:
+            msg += int(type).to_bytes(1, "big")
         self.writer.write(msg)
         r = await text2bytes(reasonLength, reason)
         self.writer.write(r)
@@ -147,8 +155,8 @@ class Server:
         clientRes = await self.reader.readexactly(16)
         return response == clientRes
 
-    async def securityResult(self, result):
-        self.writer.write(result.to_bytes(4, "big"))
+    async def securityResult(self, result: SecurityResult):
+        self.writer.write(int(result).to_bytes(4, "big"))
 
     async def securityResultReason(self, reasonLength, reason):
         r = await text2bytes(reasonLength, reason)
@@ -229,7 +237,7 @@ class Server:
             msg += data
         self.writer.write(msg)
 
-    async def setColorMapEntries(self, colorIndex: int, num: int, colors: Collection[Collection[int]]):
+    async def setColorMapEntries(self, colorIndex: int, num: int, colors: Collection[Tuple[int, int, int]]):
         msg = bytes()
         message_type = 1
         msg += message_type.to_bytes(1, "big")

@@ -35,10 +35,16 @@ async def authBypassHalfSecurity(client: Client):
     await client.clientInit()
     return await client.ServerInit()
 
+async def introOverlong(client: Client):
+    await client.connect(host, port)
+    await client.intro(b'a'*600)
+    return 800,600
+
 authBypassTests = [
     authBypassNothing,
     authBypassInit,
     authBypassIntro,
     authBypassIntroInit,
-    authBypassHalfSecurity
+    authBypassHalfSecurity,
+    introOverlong
 ]

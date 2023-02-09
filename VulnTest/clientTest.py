@@ -67,9 +67,10 @@ async def main():
         print(name)
         result = False
         try:
-            result = results.append([name, await test(t)])
+            result = await test(t)
         except Exception as e:
             print(f"Exception during test: {e}")
+        results.append([name, result])
         await sleep(1)
     print(tabulate(results, headers=["Function", "Still running?"], tablefmt="grid"))
 

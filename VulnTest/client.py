@@ -19,11 +19,11 @@ class Client:
             await self.writer.wait_closed()
 
     # protocol handshake
-    async def intro(self):
+    async def intro(self, bytes=b'RFB 003.008\n'):
         intro = await self.reader.readline()
         if intro[:4] != b'RFB ':
             raise ValueError(f'not a VNC server: {intro}')
-        self.writer.write(b'RFB 003.008\n')
+        self.writer.write(bytes)
 
     # security handshake
     async def security(self, password):
