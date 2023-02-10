@@ -227,10 +227,10 @@ class Server:
         for i in range(len(rectangles)):
             # rectangle
             rectangle = rectangles[i]
-            msg += rectangle[0].to_bytes(2, "big") # x
-            msg += rectangle[1].to_bytes(2, "big") # y
-            msg += rectangle[2].to_bytes(2, "big") # w
-            msg += rectangle[3].to_bytes(2, "big") # h
+            msg += rectangle[0].to_bytes(2, "big", signed=True) # x
+            msg += rectangle[1].to_bytes(2, "big", signed=True) # y
+            msg += rectangle[2].to_bytes(2, "big", signed=True) # w
+            msg += rectangle[3].to_bytes(2, "big", signed=True) # h
             msg += rectangle[4].to_bytes(4, "big") # encoding-type
             # pixel data
             data = pixelData[i]
@@ -243,7 +243,7 @@ class Server:
         msg += message_type.to_bytes(1, "big")
         padding = int(0)
         msg += padding.to_bytes(1, "big")
-        msg += colorIndex.to_bytes(2, "big") # first-color
+        msg += colorIndex.to_bytes(2, "big", signed=True) # first-color
         msg += num.to_bytes(2, "big") # number-of-colors
         for color in colors:
             msg += color[0].to_bytes(2, "big") # red

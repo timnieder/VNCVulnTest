@@ -182,14 +182,14 @@ async def frameBufferXYWHOverflow(server: Server):
 
 async def frameBufferRawDataUnderflow(server: Server):
     async def callback(server: Server):
-        data = await generateRawData(server.width/2, server.height/2, server.pixelFormat)
+        data = await generateRawData(int(server.width/2), int(server.height/2), server.pixelFormat)
         await server.framebufferUpdate(1, [(0, 0, server.width, server.height, 0)], [data])
     await frameBufferSetup(server, callback)
 
 async def frameBufferRawDataOverflow(server: Server):
     async def callback(server: Server):
         data = await generateRawData(server.width, server.height, server.pixelFormat)
-        await server.framebufferUpdate(1, [(0, 0, server.width/2, server.height/2, 0)], [data*5])
+        await server.framebufferUpdate(1, [(0, 0, int(server.width/2), int(server.height/2), 0)], [data*5])
     await frameBufferSetup(server, callback)
 
 # TODO: other encodings?
@@ -211,7 +211,7 @@ async def setColorMapEntriesIndexOverflow(server: Server):
     await server.clientInit()
     await server.serverInit(server.width, server.height, server.pixelFormat, 7, "desktop")
     color = (255, 255, 255)
-    await server.setColorMapEntries(80000, 5, [color,color,color,color,color])
+    await server.setColorMapEntries(2000, 5, [color,color,color,color,color])
 
 async def setColorMapEntriesNumUnderflow(server: Server):
     valid = await server.intro()
