@@ -166,10 +166,12 @@ async def frameBufferRectanglesOverflow(server: Server):
 
 async def frameBufferXYWHUnderflow(server: Server):
     async def callback(server: Server):
-        x = -server.width - 500
-        y = -server.height - 500
+        #x = -server.width - 500
+        #y = -server.height - 500
+        x = 60000
+        y = 60000
         data = await generateRawData(server.width, server.height, server.pixelFormat)
-        await server.framebufferUpdate(1, [(x, y, server.width, server.height, 0)], [data])
+        await server.framebufferUpdate(1, [(x, y, server.width, server.height, 0)], [data], False)
     await frameBufferSetup(server, callback)
 
 async def frameBufferXYWHOverflow(server: Server):

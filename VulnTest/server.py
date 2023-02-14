@@ -217,7 +217,7 @@ class Server:
         return text
 
     # s2c messages
-    async def framebufferUpdate(self, num, rectangles:Collection[Tuple[int, int, int, int, int]], pixelData:Collection[bytes]):
+    async def framebufferUpdate(self, num, rectangles:Collection[Tuple[int, int, int, int, int]], pixelData:Collection[bytes], signed: bool=True):
         msg = bytes()
         message_type = 0
         msg += message_type.to_bytes(1, "big")
@@ -227,10 +227,10 @@ class Server:
         for i in range(len(rectangles)):
             # rectangle
             rectangle = rectangles[i]
-            msg += rectangle[0].to_bytes(2, "big", signed=True) # x
-            msg += rectangle[1].to_bytes(2, "big", signed=True) # y
-            msg += rectangle[2].to_bytes(2, "big", signed=True) # w
-            msg += rectangle[3].to_bytes(2, "big", signed=True) # h
+            msg += rectangle[0].to_bytes(2, "big", signed=signed) # x
+            msg += rectangle[1].to_bytes(2, "big", signed=signed) # y
+            msg += rectangle[2].to_bytes(2, "big", signed=signed) # w
+            msg += rectangle[3].to_bytes(2, "big", signed=signed) # h
             msg += rectangle[4].to_bytes(4, "big") # encoding-type
             # pixel data
             data = pixelData[i]
