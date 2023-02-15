@@ -27,6 +27,14 @@
             "program": "serverTest.py",
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "UltraVNC Crash",
+            "type": "python",
+            "request": "launch",
+            "program": "serverUltraVNCCrash.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }

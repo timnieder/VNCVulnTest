@@ -3,9 +3,9 @@ from asyncio import run, sleep, CancelledError
 from tabulate import tabulate
 import serverTests
 
-async def test(func):
-    width = 300
-    height = 300
+async def test(func, w = 300, h = 300):
+    width = w
+    height = h
     format = PixelFormat(32, 32, False, True, 255, 255, 255, 16, 8, 0)
     server = Server(width, height, format)
     host = "127.0.0.1"
@@ -45,5 +45,4 @@ async def main():
         await sleep(1)
     print(tabulate(results, headers=["Function", "Still running?"], tablefmt="grid"))
 
-#run(main())
-run(test(serverTests.frameBufferXYWHUnderflow))
+run(main())

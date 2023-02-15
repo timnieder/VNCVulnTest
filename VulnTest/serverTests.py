@@ -168,8 +168,9 @@ async def frameBufferXYWHUnderflow(server: Server):
     async def callback(server: Server):
         #x = -server.width - 500
         #y = -server.height - 500
-        x = 60000
         y = 60000
+        #yy = server.height + y
+        x = 35314 #int((2147483647-(server.width*yy))/yy)+1
         data = await generateRawData(server.width, server.height, server.pixelFormat)
         await server.framebufferUpdate(1, [(x, y, server.width, server.height, 0)], [data], False)
     await frameBufferSetup(server, callback)
