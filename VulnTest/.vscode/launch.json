@@ -35,6 +35,14 @@
             "program": "serverUltraVNCCrash.py",
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "RFC Server",
+            "type": "python",
+            "request": "launch",
+            "program": "serverRfc.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }
