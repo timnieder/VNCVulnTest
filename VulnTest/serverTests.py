@@ -1,4 +1,4 @@
-from server import Server, generateRawData
+from server import Server, generateRawData, generateRREData, generateHextileData
 from helper import read_int
 from asyncio import StreamReader, StreamWriter
 from const import SecurityResult, SecurityTypes
@@ -26,6 +26,7 @@ async def rfc(server: Server):
         message_type = await read_int(server.reader, 1)
         if message_type == 0:
             pixelFormat = await server.setPixelFormat()
+            server.pixelFormat = pixelFormat
             print(f"SetPixelFormat: {pixelFormat}")
         elif message_type == 2:
             encodings = await server.setEncodings()
@@ -33,14 +34,21 @@ async def rfc(server: Server):
         elif message_type == 3:
             incremental, x, y, w, h = await server.framebufferUpdateRequest()
             # send random data back
+            type = 0
             data = await generateRawData(server.width, server.height, server.pixelFormat)
-            await server.framebufferUpdate(1, [(0, 0, server.width, server.height, 0)], [data])
+            #data = await generateRREData(server.width, server.height, server.pixelFormat)
+            #data = await generateHextileData(server.width, server.height, server.pixelFormat)
+            await server.framebufferUpdate(1, [(0, 0, server.width, server.height, type)], [data])
+            print("FramebufferUpdate")
         elif message_type == 4:
             down, key = await server.keyEvent()
+            print("KeyEvent")
         elif message_type == 5:
             mask, x, y = await server.pointerEvent()
+            print("PointerEvent")
         elif message_type == 6:
             text = await server.clientCutText()
+            print("ClientCutText")
         else:
             print(f"unknown message type {message_type}")
     

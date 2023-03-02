@@ -7,6 +7,7 @@ from tabulate import tabulate
 import secrets
 from helper import read_bool, read_int, read_text, text2bytes
 from const import SecurityResult, SecurityTypes
+import struct
 
 class PixelFormat:
     bitsPerPixel: int = field()
@@ -75,6 +76,7 @@ async def read_pixelformat(reader: StreamReader) -> PixelFormat:
 def rawColor(r, g, b, format) -> int:
     return ((r & format.redMax) << format.redShift) | ((g & format.greenMax) << format.greenShift) | ((b & format.blueMax) << format.blueShift)
 
+# encoding 0
 # black white pattern #TODO: more like black and yellow
 async def generateRawData(w: int, h: int, format: PixelFormat) -> bytes:
     msg = bytes()
@@ -93,6 +95,98 @@ async def generateRawData(w: int, h: int, format: PixelFormat) -> bytes:
             msg += clr.to_bytes(bpp, endianess)
     return msg
 
+# encoding 1
+async def copyRect(srcX: int, srcY: int, signed=False) -> bytes:
+    msg = bytes()
+    msg += srcX.to_bytes(2, "big", signed=signed)
+    msg += srcY.to_bytes(2, "big", signed=signed)
+    return msg
+
+# encoding 2
+# chessboard, 2 subrectangles
+async def generateRREData(w: int, h: int, format: PixelFormat) -> bytes:
+    msg = bytes()
+    bpp = int(format.bitsPerPixel / 8)
+    endianess = "big"
+    black = rawColor(0, 0, 0, format)
+    white = rawColor(255, 255, 255, format)
+    # header
+    msg += int(2).to_bytes(4, endianess, signed=True) #number-of-subrectangles
+    msg += black.to_bytes(bpp, endianess) # background-pixel-value
+    # 2 subrectangles
+    # first
+    msg += white.to_bytes(bpp, endianess) # subrect-pixel-value
+    msg += int(0).to_bytes(2, "big", signed=True) #x
+    msg += int(0).to_bytes(2, "big", signed=True) #y
+    msg += int(w/2).to_bytes(2, "big", signed=True) #w
+    msg += int(h/2).to_bytes(2, "big", signed=True) #h
+    # second
+    msg += white.to_bytes(bpp, endianess) # subrect-pixel-value
+    msg += int(w/2).to_bytes(2, "big", signed=True) #x
+    msg += int(h/2).to_bytes(2, "big", signed=True) #y
+    msg += int(w/2).to_bytes(2, "big", signed=True) #w
+    msg += int(h/2).to_bytes(2, "big", signed=True) #h
+    return msg
+
+def hextileMask(raw: bool, background: bool, foreground: bool, anySubrects: bool, subrectsColored: bool) -> int:
+    return (int(raw) << 0) | (int(background) << 1) | (int(foreground) << 2) | (int(anySubrects) << 3) | (int(subrectsColored) << 4)
+
+def hextileSubrect(x: int, y: int, w: int, h: int) -> bytes:
+    return struct.pack(">BB", (x << 4 | y << 0), ((w-1) << 4 | (h-1) << 0))
+
+# encoding 5
+async def generateHextileData(w: int, h: int, format: PixelFormat) -> bytes:
+    msg = bytes()
+    bpp = int(format.bitsPerPixel / 8)
+    endianess = "big"
+    black = rawColor(0, 0, 0, format)
+    white = rawColor(255, 255, 255, format)
+    red = rawColor(255, 0, 0, format)
+    blue = rawColor(0, 0, 255, format)
+    sizeW = 16
+    sizeH = 16
+    wLeft = w
+    hLeft = h
+    startI = 0
+    endI = 4
+    i = startI
+    while (hLeft > 0):
+        while (wLeft > 0):
+            # cope with the size
+            rectW = min(sizeW, wLeft)
+            rectH = min(sizeH, hLeft)
+            rectangle = bytes()
+            if (i == 0): # raw
+                rectangle += hextileMask(True, False, False, False, False).to_bytes(1, endianess)
+                rectangle += await generateRawData(rectW, rectH, format)
+            elif (i == 1): # background, black
+                rectangle += hextileMask(False, True, False, False, False).to_bytes(1, endianess)
+                rectangle += black.to_bytes(bpp, endianess)
+            elif (i == 2): # foreground, 1 subrects, fully white
+                rectangle += hextileMask(False, False, True, True, False).to_bytes(1, endianess)
+                rectangle += white.to_bytes(bpp, endianess)
+                rectangle += int(1).to_bytes(1, "big", signed=False) #number of subrects
+                rectangle += hextileSubrect(0, 0, rectW, rectH)
+            elif (i == 3): # 2 subrects, depend on fg clr
+                rectangle += hextileMask(False, False, False, True, False).to_bytes(1, endianess)
+                rectangle += int(2).to_bytes(1, "big", signed=False) #number of subrects
+                rectangle += hextileSubrect(0,0, int(16/2), int(16/2))
+                rectangle += hextileSubrect(int(16/2),int(16/2), int(16/2), int(16/2))
+            elif (i == 4): # 2 subrects, diff colors
+                rectangle += hextileMask(False, False, False, True, True).to_bytes(1, endianess)
+                rectangle += int(2).to_bytes(1, "big", signed=True) #number of subrects
+                rectangle += red.to_bytes(bpp, endianess)
+                rectangle += hextileSubrect(0,0, int(16/2), int(16/2))
+                rectangle += blue.to_bytes(bpp, endianess)
+                rectangle += hextileSubrect(int(16/2),int(16/2), int(16/2), int(16/2))
+            wLeft -= sizeW
+            msg += rectangle
+        hLeft -= sizeH
+        wLeft = w
+        i = i + 1 # cycle i
+        if (i > endI): # reset i
+            i = startI
+    return msg
 
 class Server:
     reader: StreamReader = field(repr=False)

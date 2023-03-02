@@ -5,7 +5,7 @@ import serverTests
 async def main(w = 300, h = 300):
     width = w
     height = h
-    format = PixelFormat(32, 32, False, True, 255, 255, 255, 16, 8, 0)
+    format = PixelFormat(32, 24, False, True, 255, 255, 255, 16, 8, 0)
     server = Server(width, height, format)
     host = "127.0.0.1"
     port = 5900
