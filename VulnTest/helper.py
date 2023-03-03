@@ -5,7 +5,7 @@ async def read_int(reader: StreamReader, length: int) -> int:
     Reads, unpacks, and returns an integer of *length* bytes.
     """
 
-    return int.from_bytes(await reader.readexactly(length), 'big')
+    return int.from_bytes(await reader.readexactly(length), 'big', signed = True)
 
 async def read_text(reader: StreamReader, encoding: str = "latin-1") -> str:
     """
