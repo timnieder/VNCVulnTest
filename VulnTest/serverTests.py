@@ -2,6 +2,7 @@ from server import Server, copyRect, generateCursorData, generateRawData, genera
 from helper import read_int
 from asyncio import StreamReader, StreamWriter
 from const import SecurityResult, SecurityTypes
+import datetime, time
 
 async def rfc(server: Server):
     valid = await server.intro()
@@ -21,6 +22,8 @@ async def rfc(server: Server):
     sharedFlag = await server.clientInit()
     await server.serverInit(server.width, server.height, server.pixelFormat, 7, "Desktop")
     
+    lastFramebufferTime = datetime.datetime.min
+    framebufferCooldown = datetime.timedelta(seconds=5)
     # parse client messages
     while True:
         message_type = await read_int(server.reader, 1)
@@ -33,33 +36,37 @@ async def rfc(server: Server):
             print(f"Encodings: {encodings}")
         elif message_type == 3:
             incremental, x, y, w, h = await server.framebufferUpdateRequest()
-            # send random data back
-            #type = 0
-            #data = await generateRawData(server.width, server.height, server.pixelFormat)
-            type = 2
-            data = await generateRREData(server.width, server.height, server.pixelFormat)
-            #type = 5
-            #data = await generateHextileData(server.width, server.height, server.pixelFormat)
-            #type = 15
-            #data = await generateTRLEData(server.width, server.height, server.pixelFormat)
-            #type = 16
-            #data = await generateZRLEData(server.width, server.height, server.pixelFormat)
-            await server.framebufferUpdate(1, [(0, 0, server.width, server.height, type), [data], signed=False)
-            #pseudoType = -239
-            #pseudoData = await generateCursorData(16, 16, server.pixelFormat)
-            #copyType = 1
-            #copyData = await copyRect(0, 0)
-            #await server.framebufferUpdate(3, 
-            #[
-            #    (0,0,16,16,pseudoType), 
-            #    (0, 0, server.width, server.height, type),
-            #    (int(server.width/2), 0, int(server.width/2), int(server.height/2), copyType)], 
-            #[
-            #    pseudoData, 
-            #    data,
-            #    copyData], 
-            #signed=False)
-            print("FramebufferUpdate")
+            now = datetime.datetime.now()
+            delta = now - lastFramebufferTime
+            if delta > framebufferCooldown:
+                # send random data back
+                type = 0
+                data = await generateRawData(server.width, server.height, server.pixelFormat)
+                #type = 2
+                #data = await generateRREData(server.width, server.height, server.pixelFormat)
+                #type = 5
+                #data = await generateHextileData(server.width, server.height, server.pixelFormat)
+                #type = 15
+                #data = await generateTRLEData(server.width, server.height, server.pixelFormat)
+                #type = 16
+                #data = await generateZRLEData(server.width, server.height, server.pixelFormat)
+                await server.framebufferUpdate(1, [(0, 0, server.width, server.height, type)], [data], signed=False)
+                #pseudoType = -239
+                #pseudoData = await generateCursorData(16, 16, server.pixelFormat)
+                #copyType = 1
+                #copyData = await copyRect(0, 0)
+                #await server.framebufferUpdate(3, 
+                #[
+                #    (0,0,16,16,pseudoType), 
+                #    (0, 0, server.width, server.height, type),
+                #    (int(server.width/2), 0, int(server.width/2), int(server.height/2), copyType)], 
+                #[
+                #    pseudoData, 
+                #    data,
+                #    copyData], 
+                #signed=False)
+                lastFramebufferTime = now
+                print("FramebufferUpdate")
         elif message_type == 4:
             down, key = await server.keyEvent()
             print("KeyEvent")

@@ -27,4 +27,4 @@ async def main(w = 300, h = 300):
         except Exception as e:
             print(f"Exception: {e}")
 
-run(main())
+run(main(20, 20))
