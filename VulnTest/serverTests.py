@@ -40,17 +40,17 @@ async def rfc(server: Server):
             delta = now - lastFramebufferTime
             if delta > framebufferCooldown:
                 # send random data back
-                type = 0
-                data = await generateRawData(server.width, server.height, server.pixelFormat)
-                #type = 2
-                #data = await generateRREData(server.width, server.height, server.pixelFormat)
+                #type = 0
+                #data = await generateRawData(server.width, server.height, server.pixelFormat)
+                type = 2
+                data = await generateRREData(server.width, server.height, server.pixelFormat)
                 #type = 5
                 #data = await generateHextileData(server.width, server.height, server.pixelFormat)
                 #type = 15
                 #data = await generateTRLEData(server.width, server.height, server.pixelFormat)
                 #type = 16
                 #data = await generateZRLEData(server.width, server.height, server.pixelFormat)
-                await server.framebufferUpdate(1, [(0, 0, server.width, server.height, type)], [data], signed=False)
+                #await server.framebufferUpdate(1, [(0, 0, server.width, server.height, type)], [data], signed=False)
                 #pseudoType = -239
                 #pseudoData = await generateCursorData(16, 16, server.pixelFormat)
                 #copyType = 1
