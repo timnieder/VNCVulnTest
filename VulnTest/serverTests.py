@@ -42,10 +42,10 @@ async def rfc(server: Server):
                 # send random data back
                 #type = 0
                 #data = await generateRawData(server.width, server.height, server.pixelFormat)
-                type = 2
-                data = await generateRREData(server.width, server.height, server.pixelFormat)
-                #type = 5
-                #data = await generateHextileData(server.width, server.height, server.pixelFormat)
+                #type = 2
+                #data = await generateRREData(server.width, server.height, server.pixelFormat)
+                type = 5
+                data = await generateHextileData(server.width, server.height, server.pixelFormat)
                 #type = 15
                 #data = await generateTRLEData(server.width, server.height, server.pixelFormat)
                 #type = 16
