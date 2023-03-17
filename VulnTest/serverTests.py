@@ -44,10 +44,10 @@ async def rfc(server: Server):
                 #data = await generateRawData(server.width, server.height, server.pixelFormat)
                 #type = 2
                 #data = await generateRREData(server.width, server.height, server.pixelFormat)
-                type = 5
-                data = await generateHextileData(server.width, server.height, server.pixelFormat)
-                #type = 15
-                #data = await generateTRLEData(server.width, server.height, server.pixelFormat)
+                #type = 5
+                #data = await generateHextileData(server.width, server.height, server.pixelFormat)
+                type = 15
+                data = await generateTRLEData(server.width, server.height, server.pixelFormat)
                 #type = 16
                 #data = await generateZRLEData(server.width, server.height, server.pixelFormat)
                 await server.framebufferUpdate(1, [(0, 0, server.width, server.height, type)], [data], signed=False)
