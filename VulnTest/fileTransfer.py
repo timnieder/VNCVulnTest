@@ -5,12 +5,14 @@ from helper import read_int
 from const import FileTransferMessages, S2CMessages
 
 host = "127.0.0.1"
+#host = "192.168.182.5"
 port = 5900
 async def main():
     client = Client()
     await client.connect(host, port)
     await client.intro()
-    result = await client.security("12345678")
+    #result = await client.security("12345678")
+    result = await client.security("viewonly")
     if result == False:
         print("wrong pw")
         return

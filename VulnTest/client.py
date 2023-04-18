@@ -166,7 +166,7 @@ class Client:
             if encoding == Encodings.Raw:
                 data = self.reader.readexactly(w*h*pixelFormat.bitsPerPixel)
             else:
-                raise Exception("unknown encoding")
+                raise Exception(f"unknown encoding {encoding}")
         return
 
     async def setColorMapEntries(self) -> List[Tuple]: # 1
