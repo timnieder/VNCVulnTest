@@ -43,6 +43,14 @@
             "program": "serverRfc.py",
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "FileTransfer",
+            "type": "python",
+            "request": "launch",
+            "program": "fileTransfer.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }

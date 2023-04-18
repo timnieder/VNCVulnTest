@@ -4,6 +4,8 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes # p
 from rfbDes import RFBDes # rfbDes.py
 from typing import Any, Callable, ClassVar, Collection, Iterator, List, Optional, Tuple, cast
 from helper import read_int, read_text
+from pixelFormat import PixelFormat, pixelformat2bytes, read_pixelformat
+from const import Encodings, C2SMessages
 
 class Client:
     reader: StreamReader = field(repr=False)
@@ -66,74 +68,146 @@ class Client:
             return False
 
     async def clientInit(self):
+        msg = bytes()
         shared_flag = int(1)
-        self.writer.write(shared_flag.to_bytes(1, "big"))
+        msg += shared_flag.to_bytes(1, "big")
+        self.writer.write(msg)
+
+    async def setPixelFormat(self, pixelFormat: PixelFormat):
+        msg = bytes()
+        message_type = int(C2SMessages.SetPixelFormat)
+        msg += message_type.to_bytes(1, "big")
+        padding = int(0)
+        msg += padding.to_bytes(3, "big")
+        msg += pixelformat2bytes(pixelFormat)
+        self.writer.write(msg)
 
     async def setEncodings(self, num: int, encodings: Collection[int]):
-        message_type = int(2)
-        self.writer.write(message_type.to_bytes(1, "big"))
+        msg = bytes()
+        message_type = int(C2SMessages.SetEncodings)
+        msg += message_type.to_bytes(1, "big")
         padding = int(0)
-        self.writer.write(padding.to_bytes(1, "big"))
-        self.writer.write(num.to_bytes(2, "big"))
+        msg += padding.to_bytes(1, "big")
+        msg += num.to_bytes(2, "big")
         for encoding in encodings:
-            self.writer.write(encoding.to_bytes(4, "big"))
+            msg += encoding.to_bytes(4, "big")
+        self.writer.write(msg)
 
     async def framebufferUpdateRequest(self, incremental:bool, x:int, y:int, w:int, h:int):
-        message_type = int(3)
-        self.writer.write(message_type.to_bytes(1, "big"))
-        self.writer.write(incremental.to_bytes(1, "big"))
-        self.writer.write(x.to_bytes(2, "big"))
-        self.writer.write(y.to_bytes(2, "big"))
-        self.writer.write(w.to_bytes(2, "big"))
-        self.writer.write(h.to_bytes(2, "big"))
+        msg = bytes()
+        message_type = int(C2SMessages.FramebufferUpdateRequest)
+        msg += message_type.to_bytes(1, "big")
+        msg += incremental.to_bytes(1, "big")
+        msg += x.to_bytes(2, "big")
+        msg += y.to_bytes(2, "big")
+        msg += w.to_bytes(2, "big")
+        msg += h.to_bytes(2, "big")
+        self.writer.write(msg)
     
     async def keyEvent(self, down:bool, key:int):
-        message_type = int(4)
-        self.writer.write(message_type.to_bytes(1, "big"))
-        self.writer.write(down.to_bytes(1, "big"))
+        msg = bytes()
+        message_type = int(C2SMessages.KeyEvent)
+        msg += message_type.to_bytes(1, "big")
+        msg += down.to_bytes(1, "big")
         padding = int(0)
-        self.writer.write(padding.to_bytes(2, "big"))
-        self.writer.write(key.to_bytes(4, "big"))
+        msg += padding.to_bytes(2, "big")
+        msg += key.to_bytes(4, "big")
+        self.writer.write(msg)
     
     async def pointerEvent(self, mask:int, x:int, y:int):
-        message_type = int(5)
-        self.writer.write(message_type.to_bytes(1, "big"))
-        self.writer.write(mask.to_bytes(1, "big"))
-        self.writer.write(x.to_bytes(2, "big"))
-        self.writer.write(y.to_bytes(2, "big"))
+        msg = bytes()
+        message_type = int(C2SMessages.PointerEvent)
+        msg += message_type.to_bytes(1, "big")
+        msg += mask.to_bytes(1, "big")
+        msg += x.to_bytes(2, "big")
+        msg += y.to_bytes(2, "big")
+        self.writer.write(msg)
 
     async def clientCutText(self, length, text):
-        message_type = int(6)
-        self.writer.write(message_type.to_bytes(1, "big"))
+        msg = bytes()
+        message_type = int(C2SMessages.ClientCutText)
+        msg += message_type.to_bytes(1, "big")
         padding = int(0)
-        self.writer.write(padding.to_bytes(3, "big"))
-        self.writer.write(length.to_bytes(4, "big"))
-        self.writer.write(text.encode("latin-1"))
+        msg += padding.to_bytes(3, "big")
+        msg += length.to_bytes(4, "big")
+        msg += text.encode("latin-1")
+        self.writer.write(msg)
 
     # raw event that writes faulty packages
     async def rawEvent(self, message_type:int, data:Collection[Tuple[int,int]]):
-        self.writer.write(message_type.to_bytes(1, "big"))
+        msg = bytes()
+        msg += message_type.to_bytes(1, "big")
         for d in data:
             length = d[0]
             dat = d[1]
-            self.writer.write(dat.to_bytes(length, "big"))
+            msg += dat.to_bytes(length, "big")
+        self.writer.write(msg)
 
     async def ServerInit(self):
         w = await read_int(self.reader, 2)
         h = await read_int(self.reader, 2)
         # server pixel format
-        bpp = await read_int(self.reader, 1)
-        depth = await read_int(self.reader, 1)
-        bigEndian = await read_int(self.reader, 1)
-        trueColor = await read_int(self.reader, 1)
-        redMax = await read_int(self.reader, 2)
-        greenMax = await read_int(self.reader, 1)
-        blueMax = await read_int(self.reader, 2)
-        redShift = await read_int(self.reader, 1)
-        greenShift = await read_int(self.reader, 1)
-        blueShift = await read_int(self.reader, 1)
-        padding = await self.reader.readexactly(3)
+        format = await read_pixelformat(self.reader)
 
         name = await read_text(self.reader)
 
-        return w,h
+        return w,h,format
+    
+    # s2c messages # skip reading message type as its probably read beforehand
+    async def framebufferUpdate(self, pixelFormat): # 0
+        await self.reader.readexactly(1) # padding
+        num = await read_int(self.reader, 2)
+        for i in range(num):
+            x = await read_int(self.reader, 2) # x-position
+            y = await read_int(self.reader, 2) # y-position
+            w = await read_int(self.reader, 2) # width
+            h = await read_int(self.reader, 2) # height
+            encoding = await read_int(self.reader, 4) # encoding-type
+            if encoding == Encodings.Raw:
+                data = self.reader.readexactly(w*h*pixelFormat.bitsPerPixel)
+            else:
+                raise Exception("unknown encoding")
+        return
+
+    async def setColorMapEntries(self) -> List[Tuple]: # 1
+        colors = []
+        await self.reader.readexactly(1) # padding
+        first = await read_int(self.reader, 2) # first-color
+        num = await read_int(self.reader, 2) # number-of-colors
+        for i in range(num):
+            r = await read_int(self.reader, 2) # red
+            g = await read_int(self.reader, 2) # green
+            b = await read_int(self.reader, 2) # blue
+            colors.append((r,g,b))
+        return colors
+
+    async def bell(self):
+        # no data
+        return
+    
+    async def serverCutText(self) -> str: # 3
+        await self.reader.readexactly(3) # padding
+        text = await read_text(self.reader)
+        return text
+
+    async def fileTransfer(self):
+        contentType = await read_int(self.reader, 1)
+        contentParam = await read_int(self.reader, 1)
+        await self.reader.readexactly(1) # padding
+        size = await read_int(self.reader, 4)
+        length = await read_int(self.reader, 4)
+        data = await self.reader.readexactly(length)
+        return contentType, contentParam, size, data
+
+    async def sendFileTransfer(self, contentType:int, contentParam:int, size:int, length:int, data:bytes):
+        msg = bytes()
+        message_type = int(C2SMessages.FileTransfer)
+        msg += message_type.to_bytes(1, "big")
+        padding = int(0)
+        msg += contentType.to_bytes(1, "big")
+        msg += contentParam.to_bytes(1, "big")
+        msg += padding.to_bytes(1, "big")
+        msg += size.to_bytes(4, "big")
+        msg += length.to_bytes(4, "big")
+        msg += data
+        self.writer.write(msg)
