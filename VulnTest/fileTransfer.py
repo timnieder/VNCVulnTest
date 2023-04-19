@@ -20,6 +20,8 @@ async def main():
     w,h,format = await client.ServerInit()
     client.pixelFormat = format
     await client.setEncodings(2, [0, 0xFFFF8002])
+    #await client.pointerEvent(0,0,0)
+    await client.sendFileTransfer(FileTransferMessages.DirContentRequest, 2, 0, 0, bytes())
     # parse client messages
     while True:
         message_type = await read_int(client.reader, 1)

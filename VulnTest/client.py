@@ -1,6 +1,5 @@
 from asyncio import StreamReader, StreamWriter, open_connection, run, sleep
 from dataclasses import field
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes # pip install cryptography
 from rfbDes import RFBDes # rfbDes.py
 from typing import Any, Callable, ClassVar, Collection, Iterator, List, Optional, Tuple, cast
 from helper import read_int, read_text
