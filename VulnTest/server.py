@@ -6,7 +6,7 @@ from typing import Any, Callable, ClassVar, Collection, Iterator, List, Optional
 from tabulate import tabulate
 import secrets
 from helper import read_bool, read_int, read_text, text2bytes
-from const import SecurityResult, SecurityTypes
+from const import SecurityResult, SecurityTypes, C2SMessages, S2CMessages
 import struct
 import bitstring
 import zlib
@@ -440,4 +440,26 @@ class Server:
         padding = int(0)
         msg += padding.to_bytes(1, "big")
         msg += await text2bytes(length, text)
+        self.writer.write(msg)
+
+    async def fileTransfer(self):
+        contentType = await read_int(self.reader, 1)
+        contentParam = await read_int(self.reader, 1)
+        await self.reader.readexactly(1) # padding
+        size = await read_int(self.reader, 4)
+        length = await read_int(self.reader, 4)
+        data = await self.reader.readexactly(length)
+        return contentType, contentParam, size, data
+
+    async def sendFileTransfer(self, contentType:int, contentParam:int, size:int, length:int, data:bytes):
+        msg = bytes()
+        message_type = int(S2CMessages.FileTransfer)
+        msg += message_type.to_bytes(1, "big")
+        padding = int(0)
+        msg += contentType.to_bytes(1, "big")
+        msg += contentParam.to_bytes(1, "big")
+        msg += padding.to_bytes(1, "big")
+        msg += size.to_bytes(4, "big")
+        msg += length.to_bytes(4, "big")
+        msg += data
         self.writer.write(msg)

@@ -51,6 +51,14 @@
             "program": "fileTransfer.py",
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "FileTransferServer",
+            "type": "python",
+            "request": "launch",
+            "program": "fileTransferServer.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }

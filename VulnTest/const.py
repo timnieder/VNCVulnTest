@@ -11,6 +11,7 @@ class SecurityResult(IntEnum):
 
 class Encodings(IntEnum):
     Raw = 0
+    RRE = 2
 
 class C2SMessages(IntEnum):
     #rfc
@@ -49,3 +50,6 @@ class FileTransferMessages(IntEnum):
     FileTransferSessionStart = 15
     FileTransferSessionEnd = 16
     FileTransferProtocolVersion = 17
+
+class PseudoEncodings(IntEnum):
+    FTProcolVersion = -32766
