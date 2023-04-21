@@ -23,6 +23,8 @@ class C2SMessages(IntEnum):
     ClientCutText = 6
     # extensions
     FileTransfer = 7
+    SetScale = 8
+    xvp = 250
 
 class S2CMessages(IntEnum):
     #rfc
@@ -32,6 +34,7 @@ class S2CMessages(IntEnum):
     ServerCutText = 3
     # extensions
     FileTransfer = 7
+    xvp = 250
 
 class FileTransferMessages(IntEnum):
     DirContentRequest = 1
@@ -53,3 +56,4 @@ class FileTransferMessages(IntEnum):
 
 class PseudoEncodings(IntEnum):
     FTProcolVersion = -32766
+    xvp = -309

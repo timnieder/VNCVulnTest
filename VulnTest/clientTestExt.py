@@ -1,23 +1,19 @@
 from client import Client
-import clientTests
+import clientTestsExt
 import clientAuthBypassTests
 from asyncio import sleep, run
 from tabulate import tabulate
 
 host = "127.0.0.1"
 port = 5900
+w = 400
+h = 300
 
 async def test(func, times = 5, sleepTime = 2):
     result = True
     client = Client()
     await client.connect(host, port)
-    await client.intro()
-    result = await client.security("12345678")
-    if result == False:
-        return
-    await client.clientInit()
-    w,h = await client.ServerInit()
-    await func(client, w, h)
+    await func(client)
     try:
         for i in range(times):
             if client.writer.is_closing():
@@ -36,10 +32,8 @@ async def test(func, times = 5, sleepTime = 2):
 async def main():
     print("Tests:")
     results = []
-    #for t in clientTests.tests:
-    for i in range(1):
-        #name = t.__qualname__
-        name = "1"
+    for t in clientTestsExt.tests:
+        name = t.__qualname__
         print(name)
         result = False
         try:
