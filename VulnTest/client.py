@@ -164,7 +164,19 @@ class Client:
             h = await read_int(self.reader, 2) # height
             encoding = await read_int(self.reader, 4) # encoding-type
             if encoding == Encodings.Raw:
-                data = self.reader.readexactly(w*h*pixelFormat.bitsPerPixel)
+                data = await self.reader.readexactly(w*h*pixelFormat.bitsPerPixel)
+            elif encoding == Encodings.RRE:
+                subrects = await read_int(self.reader, 4)
+                pixel = await self.reader.readexactly(pixelFormat.bitsPerPixel)
+                for i in range(subrects):
+                    rect_clr = await self.reader.readexactly(pixelFormat.bitsPerPixel)
+                    rect_x = await read_int(self.reader, 2)
+                    rect_y = await read_int(self.reader, 2)
+                    rect_w = await read_int(self.reader, 2)
+                    rect_h = await read_int(self.reader, 2)
+            elif encoding == Encodings.ZRLE:
+                length = await read_int(self.reader, 4)
+                data = await self.reader.readexactly(length)
             else:
                 raise Exception(f"unknown encoding {encoding}")
         return
@@ -235,4 +247,21 @@ class Client:
         padding = int(0)
         msg += scale.to_bytes(1, "big", signed=signed)
         msg += padding.to_bytes(2, "big")
+        self.writer.write(msg)
+
+    async def gii(self):
+        endianAndType = await read_int(self.reader, 1)
+        length = await read_int(self.reader, 2)
+        type = endianAndType & 0b01111111
+        endianess = endianAndType & 0b10000000
+        data = await self.reader.readexactly(length)
+        return endianess, type, data
+
+    async def sendGii(self, type, length, data:bytes):
+        msg = bytes()
+        message_type = int(C2SMessages.gii)
+        msg += message_type.to_bytes(1, "big")
+        msg += type.to_bytes(1, "big")
+        msg += length.to_bytes(2, "big")
+        msg += data
         self.writer.write(msg)

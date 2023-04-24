@@ -1,11 +1,11 @@
 from asyncio import StreamReader
 
-async def read_int(reader: StreamReader, length: int) -> int:
+async def read_int(reader: StreamReader, length: int, signed=True) -> int:
     """
     Reads, unpacks, and returns an integer of *length* bytes.
     """
 
-    return int.from_bytes(await reader.readexactly(length), 'big', signed = True)
+    return int.from_bytes(await reader.readexactly(length), 'big', signed = signed)
 
 async def read_text(reader: StreamReader, encoding: str = "latin-1") -> str:
     """

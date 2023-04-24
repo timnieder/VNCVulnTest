@@ -393,13 +393,36 @@ class Server:
         y = await read_int(self.reader, 2)
         return mask, x, y
 
-    async def clientCutText(self) -> str: # 6
+    async def clientCutText(self, extended=False) -> str: # 6
         await self.reader.readexactly(3) # padding
-        text = await read_text(self.reader)
+        if not extended:
+            text = await read_text(self.reader)
+        else:
+            zlibDecompress = zlib.decompressobj()
+            length = await read_int(self.reader, 4)
+            if length < 0:
+                length = abs(length)
+                flags = await read_int(self.reader, 4)
+                data = await self.reader.readexactly(length - 4)
+                data = zlibDecompress.decompress(data)
+                cur = 0
+                if flags & 1<<28: #provide
+                    for i in range(16): # check each flag
+                        if not flags & 1 << i:
+                            continue
+                        # read size
+                        size = int.from_bytes(data[cur:cur+4], "big")
+                        cur += 4
+                        # read data
+                        text = data[cur:cur+size].decode("utf-8")
+                        return text
+                        #cur += size
+            else:
+                text = (await self.reader.readexactly(length)).decode("latin-1")
         return text
 
     # s2c messages
-    async def framebufferUpdate(self, num, rectangles:Collection[Tuple[int, int, int, int, int]], pixelData:Collection[bytes], signed: bool=True):
+    async def framebufferUpdate(self, num, rectangles:Collection[Tuple[int, int, int, int, int]], pixelData:Collection[bytes], signed: bool=True, encSigned: bool=True):
         msg = bytes()
         message_type = 0
         msg += message_type.to_bytes(1, "big")
@@ -413,7 +436,7 @@ class Server:
             msg += rectangle[1].to_bytes(2, "big", signed=signed) # y
             msg += rectangle[2].to_bytes(2, "big", signed=signed) # w
             msg += rectangle[3].to_bytes(2, "big", signed=signed) # h
-            msg += rectangle[4].to_bytes(4, "big", signed=True) # encoding-type
+            msg += rectangle[4].to_bytes(4, "big", signed=encSigned) # encoding-type
             # pixel data
             data = pixelData[i]
             msg += data
@@ -435,11 +458,22 @@ class Server:
 
     async def serverCutText(self, length: int, text: str):
         msg = bytes()
-        message_type = 1
+        message_type = S2CMessages.ServerCutText
         msg += message_type.to_bytes(1, "big")
         padding = int(0)
-        msg += padding.to_bytes(1, "big")
+        msg += padding.to_bytes(3, "big")
         msg += await text2bytes(length, text)
+        self.writer.write(msg)
+
+    async def extendedServerCutText(self, length: int, flags: int, data: bytes):
+        msg = bytes()
+        message_type = S2CMessages.ServerCutText
+        msg += message_type.to_bytes(1, "big")
+        padding = int(0)
+        msg += padding.to_bytes(3, "big")
+        msg += length.to_bytes(4, "big", signed=True)
+        msg += flags.to_bytes(4, "big")
+        msg += data
         self.writer.write(msg)
 
     async def fileTransfer(self):

@@ -12,6 +12,7 @@ class SecurityResult(IntEnum):
 class Encodings(IntEnum):
     Raw = 0
     RRE = 2
+    ZRLE = 16
 
 class C2SMessages(IntEnum):
     #rfc
@@ -25,6 +26,7 @@ class C2SMessages(IntEnum):
     FileTransfer = 7
     SetScale = 8
     xvp = 250
+    gii = 253
 
 class S2CMessages(IntEnum):
     #rfc
@@ -35,6 +37,7 @@ class S2CMessages(IntEnum):
     # extensions
     FileTransfer = 7
     xvp = 250
+    gii = 253
 
 class FileTransferMessages(IntEnum):
     DirContentRequest = 1
@@ -57,3 +60,8 @@ class FileTransferMessages(IntEnum):
 class PseudoEncodings(IntEnum):
     FTProcolVersion = -32766
     xvp = -309
+    gii = -305
+    ServerIdentity = 0xFFFE0003
+    PointerPos = 0xFFFFFF18
+    ExtendedDesktopSize = -308
+    ExtendedViewSize = -307
