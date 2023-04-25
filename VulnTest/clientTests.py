@@ -47,6 +47,11 @@ async def outOfOrderSecurity(client: Client, w, h):
 async def outOfOrderAuthenticate(client: Client, w, h):
     await client.authenticate(2, "1234")
 
+async def pixelFormatZero(client: Client):
+    from pixelFormat import PixelFormat
+    client.pixelFormat = PixelFormat(32, 24, True,True,0,0,0,0,0,0)
+    await client.setPixelFormat(client.pixelFormat)
+
 tests = [
     setEncodingUnderflow,
     setEncodingOverflow,
@@ -66,5 +71,7 @@ tests = [
     outOfOrderProtocol,
     outOfOrderClientInit,
     outOfOrderAuthenticate,
-    outOfOrderSecurity
+    outOfOrderSecurity,
+
+    pixelFormatZero,
 ]

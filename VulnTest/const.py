@@ -25,7 +25,11 @@ class C2SMessages(IntEnum):
     # extensions
     FileTransfer = 7
     SetScale = 8
+    SetSW = 10
+    TextChat = 11
+    PalmVNCSetScaleFactor = 15
     xvp = 250
+    SetDesktopSize = 251
     gii = 253
 
 class S2CMessages(IntEnum):
@@ -35,7 +39,10 @@ class S2CMessages(IntEnum):
     Bell = 2
     ServerCutText = 3
     # extensions
+    ResizeFramebuffer = 4
     FileTransfer = 7
+    PalmVNCResizeFramebuffer = 15
+    ServerState = 173
     xvp = 250
     gii = 253
 

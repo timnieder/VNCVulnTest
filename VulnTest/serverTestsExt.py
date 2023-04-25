@@ -195,6 +195,7 @@ async def ExtendedViewSizeWH(server: Server):
 
             break
 
+# lib, ultra
 async def ExtendedClipboardDisabledRequest(server: Server):
     valid = await server.intro()
     auth_type = await server.security(1, [SecurityTypes.NONE])
@@ -226,6 +227,104 @@ async def ExtendedClipboardDisabledRequest(server: Server):
         else:
             print(f"unknown msg {message_type}")
 
+#ultra
+async def ServerState(server: Server):
+    valid = await server.intro()
+    auth_type = await server.security(1, [SecurityTypes.NONE])
+    await server.securityResult(SecurityResult.OK)
+    sharedFlag = await server.clientInit()
+    await server.serverInit(server.width, server.height, server.pixelFormat, 7, "Desktop")
+
+    sent = False
+    while True:
+        message_type = await read_int(server.reader, 1)
+        if message_type == C2SMessages.SetPixelFormat:
+            await server.setPixelFormat()
+            #request
+            if not sent:
+                print("sending")
+                await server.ServerState(2, -1, True)
+                await server.ServerState(3, -1, True)
+                sent = True
+        elif message_type == C2SMessages.SetEncodings:
+            await server.setEncodings()
+        elif message_type == C2SMessages.FramebufferUpdateRequest:
+            await server.framebufferUpdateRequest()
+        elif message_type == C2SMessages.PointerEvent:
+            await server.pointerEvent()
+        elif message_type == C2SMessages.KeyEvent:
+            await server.keyEvent()
+        elif message_type == C2SMessages.ClientCutText:
+            data = await server.clientCutText(True)
+            print(data)
+        else:
+            print(f"unknown msg {message_type}")
+
+#ultra, lib
+async def ResizeFramebuffer(server: Server):
+    valid = await server.intro()
+    auth_type = await server.security(1, [SecurityTypes.NONE])
+    await server.securityResult(SecurityResult.OK)
+    sharedFlag = await server.clientInit()
+    await server.serverInit(server.width, server.height, server.pixelFormat, 7, "Desktop")
+
+    sent = False
+    while True:
+        message_type = await read_int(server.reader, 1)
+        if message_type == C2SMessages.SetPixelFormat:
+            await server.setPixelFormat()
+            #request
+            if not sent:
+                print("sending")
+                await server.ResizeFramebuffer(-1, -1, True)
+                sent = True
+        elif message_type == C2SMessages.SetEncodings:
+            await server.setEncodings()
+        elif message_type == C2SMessages.FramebufferUpdateRequest:
+            await server.framebufferUpdateRequest()
+        elif message_type == C2SMessages.PointerEvent:
+            await server.pointerEvent()
+        elif message_type == C2SMessages.KeyEvent:
+            await server.keyEvent()
+        elif message_type == C2SMessages.ClientCutText:
+            data = await server.clientCutText(True)
+            print(data)
+        else:
+            print(f"unknown msg {message_type}")
+
+#ultra, lib
+async def PalmVNCResizeFramebuffer(server: Server):
+    valid = await server.intro()
+    auth_type = await server.security(1, [SecurityTypes.NONE])
+    await server.securityResult(SecurityResult.OK)
+    sharedFlag = await server.clientInit()
+    await server.serverInit(server.width, server.height, server.pixelFormat, 7, "Desktop")
+
+    sent = False
+    while True:
+        message_type = await read_int(server.reader, 1)
+        if message_type == C2SMessages.SetPixelFormat:
+            await server.setPixelFormat()
+            #request
+            if not sent:
+                print("sending")
+                await server.PalmVNCResizeFramebuffer(500,500,-1, -1, True)
+                await server.PalmVNCResizeFramebuffer(-1,-1,500, 500, True)
+                sent = True
+        elif message_type == C2SMessages.SetEncodings:
+            await server.setEncodings()
+        elif message_type == C2SMessages.FramebufferUpdateRequest:
+            await server.framebufferUpdateRequest()
+        elif message_type == C2SMessages.PointerEvent:
+            await server.pointerEvent()
+        elif message_type == C2SMessages.KeyEvent:
+            await server.keyEvent()
+        elif message_type == C2SMessages.ClientCutText:
+            data = await server.clientCutText(True)
+            print(data)
+        else:
+            print(f"unknown msg {message_type}")
+
 tests = [
     #ServerIdentityMax,
     #PointerPosOOR,
@@ -234,5 +333,8 @@ tests = [
     #ExtDesktopSizeScreens,
     #ExtendedViewSizeYX,
     #ExtendedViewSizeWH,
-    ExtendedClipboardDisabledRequest,
+    #ExtendedClipboardDisabledRequest,
+    #ServerState,
+    ResizeFramebuffer,
+    PalmVNCResizeFramebuffer,
 ]

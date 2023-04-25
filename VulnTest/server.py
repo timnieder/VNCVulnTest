@@ -497,3 +497,35 @@ class Server:
         msg += length.to_bytes(4, "big")
         msg += data
         self.writer.write(msg)
+
+    async def ServerState(self, type: int, value: int, signed=False):
+        msg = bytes()
+        message_type = int(S2CMessages.ServerState)
+        msg += message_type.to_bytes(1, "big")
+        padding = int(0)
+        msg += padding.to_bytes(3, "big")
+        msg += type.to_bytes(4, "big", signed=signed)
+        msg += value.to_bytes(4, "big", signed=signed)
+        self.writer.write(msg)
+
+    async def ResizeFramebuffer(self, w: int, h: int, signed=False):
+        msg = bytes()
+        message_type = int(S2CMessages.ResizeFramebuffer)
+        msg += message_type.to_bytes(1, "big")
+        padding = int(0)
+        msg += padding.to_bytes(1, "big")
+        msg += w.to_bytes(2, "big", signed=signed)
+        msg += h.to_bytes(2, "big", signed=signed)
+        self.writer.write(msg)
+
+    async def PalmVNCResizeFramebuffer(self, desktopW: int, desktopH: int, w: int, h: int, signed=False):
+        msg = bytes()
+        message_type = int(S2CMessages.PalmVNCResizeFramebuffer)
+        msg += message_type.to_bytes(1, "big")
+        padding = int(0)
+        msg += padding.to_bytes(1, "big")
+        msg += desktopW.to_bytes(2, "big", signed=signed)
+        msg += desktopH.to_bytes(2, "big", signed=signed)
+        msg += w.to_bytes(2, "big", signed=signed)
+        msg += h.to_bytes(2, "big", signed=signed)
+        self.writer.write(msg)

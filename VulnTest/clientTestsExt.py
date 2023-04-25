@@ -32,6 +32,7 @@ async def xvpViewOnly(client: Client):
             print(f"v {version}, code: {message}")
             await client.sendXvp(1, 2) # v1, XVP_SHUTDOWN
 
+# lib, ultra
 async def setScaleZero(client: Client):
     await client.intro()
     result = await client.security("12345678")
@@ -132,12 +133,91 @@ async def giiViewOnly(client: Client):
 
                 await client.sendGii(128, len(data), data)
         else:
-            print(f"unknown message: {message_type}")
+            print(f"unknown message: {message_type}")#
+
+# lib, ultra
+async def setScaleFactorZero(client: Client):
+    await client.intro()
+    result = await client.security("12345678")
+    await client.clientInit()
+    w,h,format = await client.ServerInit()
+    client.pixelFormat = format
+    await client.setEncodings(2, [Encodings.RRE, Encodings.Raw])
+    await client.setPixelFormat(client.pixelFormat)
+    await client.setScaleFactor(0)
+
+async def setScaleFactorNegative(client: Client):
+    await client.intro()
+    result = await client.security("12345678")
+    await client.clientInit()
+    w,h,format = await client.ServerInit()
+    client.pixelFormat = format
+    await client.setEncodings(2, [Encodings.RRE, Encodings.Raw])
+    await client.setPixelFormat(client.pixelFormat)
+    await client.setScaleFactor(-128, True)
+
+async def setScaleFactorMax(client: Client):
+    await client.intro()
+    result = await client.security("12345678")
+    await client.clientInit()
+    w,h,format = await client.ServerInit()
+    client.pixelFormat = format
+    await client.setEncodings(2, [Encodings.RRE, Encodings.Raw])
+    await client.setPixelFormat(client.pixelFormat)
+    await client.setScaleFactor(255)
+
+# lib, ultra
+async def SW(client: Client):
+    await client.intro()
+    result = await client.security("12345678")
+    await client.clientInit()
+    w,h,format = await client.ServerInit()
+    client.pixelFormat = format
+    await client.setEncodings(2, [Encodings.RRE, Encodings.Raw])
+    await client.setPixelFormat(client.pixelFormat)
+    await client.SetSW(0, -1, -1, signed=True)
+
+# tight, lib, ultra
+async def TextChatOverlong(client: Client):
+    await client.intro()
+    result = await client.security("12345678")
+    await client.clientInit()
+    w,h,format = await client.ServerInit()
+    client.pixelFormat = format
+    await client.setEncodings(2, [Encodings.RRE, Encodings.Raw])
+    await client.setPixelFormat(client.pixelFormat)
+    # open twice
+    length = 65500
+    data = length*b"\x00"
+    await client.TextChat(length, data)
+
+# lib, ultra
+async def SetDesktopSize(client: Client):
+    await client.intro()
+    result = await client.security("12345678")
+    await client.clientInit()
+    w,h,format = await client.ServerInit()
+    client.pixelFormat = format
+    await client.setEncodings(2, [Encodings.RRE, Encodings.Raw])
+    from pixelFormat import PixelFormat
+    client.pixelFormat = PixelFormat(32, 24, True,True,0,0,0,0,0,0)
+    await client.setPixelFormat(client.pixelFormat)
+    w = -1
+    h = -1
+    await client.SetDesktopSize(w, h, 1, [(1, w, h, w, h, 0)], signed=True)
+
 
 tests = [
     #xvpViewOnly,
     #setScaleZero,
     #setScaleNegative,
     #setScaleMax,
-    giiViewOnly,
+    #giiViewOnly,
+    #setScaleFactorZero,
+    #setScaleFactorNegative,
+    #setScaleFactorMax,
+    #SW,
+    #TextChatOverlong,
+    #SetDesktopSize,
+    ServerState
 ]

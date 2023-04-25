@@ -30,8 +30,12 @@ class Client:
     async def security(self, password):
         # read auth types
         numberOfTypes = await read_int(self.reader, 1)
-        auth_types = set(await self.reader.readexactly(numberOfTypes))
-        print(f"auth_types: {auth_types}")
+        if numberOfTypes == 0:
+            reason = await read_text(self.reader)
+            print(reason)
+            return False
+        auth_types = list(await self.reader.readexactly(numberOfTypes))
+        print(f"auth_types ({numberOfTypes}): {auth_types}")
 
         # select auth type
         for auth_type in (1, 2):
@@ -240,7 +244,7 @@ class Client:
         msg += message.to_bytes(1, "big")
         self.writer.write(msg)
 
-    async def setScale(self, scale, signed=False):
+    async def setScale(self, scale: int, signed=False):
         msg = bytes()
         message_type = int(C2SMessages.SetScale)
         msg += message_type.to_bytes(1, "big")
@@ -248,7 +252,16 @@ class Client:
         msg += scale.to_bytes(1, "big", signed=signed)
         msg += padding.to_bytes(2, "big")
         self.writer.write(msg)
-
+        
+    async def setScaleFactor(self, scale: int, signed=False):
+        msg = bytes()
+        message_type = int(C2SMessages.PalmVNCSetScaleFactor)
+        msg += message_type.to_bytes(1, "big")
+        padding = int(0)
+        msg += scale.to_bytes(1, "big", signed=signed)
+        msg += padding.to_bytes(2, "big")
+        self.writer.write(msg)
+    
     async def gii(self):
         endianAndType = await read_int(self.reader, 1)
         length = await read_int(self.reader, 2)
@@ -264,4 +277,42 @@ class Client:
         msg += type.to_bytes(1, "big")
         msg += length.to_bytes(2, "big")
         msg += data
+        self.writer.write(msg)
+
+    async def SetSW(self, status, x, y, signed=False):
+        msg = bytes()
+        message_type = int(C2SMessages.SetSW)
+        msg += message_type.to_bytes(1, "big")
+        msg += status.to_bytes(1, "big")
+        msg += x.to_bytes(2, "big", signed=signed)
+        msg += y.to_bytes(2, "big", signed=signed)
+        self.writer.write(msg)
+    
+    async def TextChat(self, length: int, data: bytes):
+        msg = bytes()
+        message_type = int(C2SMessages.TextChat)
+        msg += message_type.to_bytes(1, "big")
+        padding = int(0)
+        msg += padding.to_bytes(3, "big")
+        msg += length.to_bytes(2, "big")
+        msg += data
+        self.writer.write(msg)
+
+    async def SetDesktopSize(self, w: int, h: int, number: int, screens: List[Tuple[int,int,int,int,int,int]], signed=False):
+        msg = bytes()
+        message_type = int(C2SMessages.SetDesktopSize)
+        msg += message_type.to_bytes(1, "big")
+        padding = int(0)
+        msg += padding.to_bytes(1, "big")
+        msg += w.to_bytes(2, "big", signed=signed) #w
+        msg += h.to_bytes(2, "big", signed=signed) #h
+        msg += number.to_bytes(1, "big") # number-of-screens
+        msg += padding.to_bytes(1, "big")
+        for screen in screens:
+            msg += screen[0].to_bytes(4, "big", signed=signed) #id
+            msg += screen[1].to_bytes(2, "big", signed=signed) #x
+            msg += screen[2].to_bytes(2, "big", signed=signed) #y
+            msg += screen[3].to_bytes(2, "big", signed=signed) #w
+            msg += screen[4].to_bytes(2, "big", signed=signed) #h
+            msg += screen[5].to_bytes(4, "big", signed=signed) #flags
         self.writer.write(msg)
