@@ -47,9 +47,9 @@ async def outOfOrderSecurity(client: Client, w, h):
 async def outOfOrderAuthenticate(client: Client, w, h):
     await client.authenticate(2, "1234")
 
-async def pixelFormatZero(client: Client):
+async def pixelFormatZero(client: Client, w, h):
     from pixelFormat import PixelFormat
-    client.pixelFormat = PixelFormat(32, 24, True,True,0,0,0,0,0,0)
+    client.pixelFormat = PixelFormat(32, 24, False, False, 0,0,0,0,0,0)
     await client.setPixelFormat(client.pixelFormat)
 
 tests = [

@@ -4,7 +4,7 @@ import clientAuthBypassTests
 from asyncio import sleep, run
 from tabulate import tabulate
 
-host = "192.168.182.5"
+host = "localhost"
 port = 5900
 
 async def test(func, times = 5, sleepTime = 2):
@@ -12,11 +12,11 @@ async def test(func, times = 5, sleepTime = 2):
     client = Client()
     await client.connect(host, port)
     await client.intro()
-    result = await client.security("popo")
+    result = await client.security("12345678")
     if result == False:
         return
     await client.clientInit()
-    w,h = await client.ServerInit()
+    w,h,format = await client.ServerInit()
     await func(client, w, h)
     try:
         for i in range(times):
@@ -76,7 +76,7 @@ async def main():
 
     print("Auth Bypass Tests")
     results = []
-    for t in clientAuthBypassTests.tests:
+    for t in clientAuthBypassTests.authBypassTests:
         name = t.__qualname__
         print(name)
         result = True

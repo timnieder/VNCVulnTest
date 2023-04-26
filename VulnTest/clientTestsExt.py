@@ -177,7 +177,7 @@ async def SW(client: Client):
     await client.setPixelFormat(client.pixelFormat)
     await client.SetSW(0, -1, -1, signed=True)
 
-# tight, lib, ultra
+# lib, ultra
 async def TextChatOverlong(client: Client):
     await client.intro()
     result = await client.security("12345678")
