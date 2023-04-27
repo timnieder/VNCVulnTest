@@ -12,6 +12,8 @@ h = 300
 async def test(func, times = 5, sleepTime = 2):
     result = True
     client = Client()
+    client.w = w
+    client.h = h
     await client.connect(host, port)
     await func(client)
     try:
@@ -19,7 +21,7 @@ async def test(func, times = 5, sleepTime = 2):
             if client.writer.is_closing():
                 raise Exception("closing")
             print("tick")
-            await client.framebufferUpdateRequest(False, 0, 0, w, h)
+            await client.framebufferUpdateRequest(False, 0, 0, client.w, client.h)
             # read image?
             await sleep(sleepTime)
     except Exception as e:

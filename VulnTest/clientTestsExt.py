@@ -202,10 +202,11 @@ async def SetDesktopSize(client: Client):
     from pixelFormat import PixelFormat
     client.pixelFormat = PixelFormat(32, 24, True,True,0,0,0,0,0,0)
     await client.setPixelFormat(client.pixelFormat)
-    w = -1
-    h = -1
-    await client.SetDesktopSize(w, h, 1, [(1, w, h, w, h, 0)], signed=True)
-
+    w = 65535
+    h = 65535
+    await client.SetDesktopSize(w, h, 1, [(1, 0, 0, w, h, 0)])
+    client.w = w
+    client.h = h
 
 tests = [
     #xvpViewOnly,
@@ -218,6 +219,5 @@ tests = [
     #setScaleFactorMax,
     #SW,
     #TextChatOverlong,
-    #SetDesktopSize,
-    ServerState
+    SetDesktopSize,
 ]
