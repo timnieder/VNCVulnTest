@@ -333,8 +333,8 @@ tests = [
     #ExtDesktopSizeScreens,
     #ExtendedViewSizeYX,
     #ExtendedViewSizeWH,
-    #ExtendedClipboardDisabledRequest,
+    ExtendedClipboardDisabledRequest,
     #ServerState,
-    ResizeFramebuffer,
-    PalmVNCResizeFramebuffer,
+    #ResizeFramebuffer,
+    #PalmVNCResizeFramebuffer,
 ]
