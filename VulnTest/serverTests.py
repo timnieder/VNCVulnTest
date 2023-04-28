@@ -286,17 +286,61 @@ async def serverCutTextOverflow(server: Server):
     await server.serverInit(server.width, server.height, server.pixelFormat, 7, "desktop")
     await server.serverCutText(600, "text")
 
+async def giantAssFramebuffer(server: Server):
+    valid = await server.intro()
+    auth_type = await server.security(1, [SecurityTypes.NONE])
+    await server.securityResult(SecurityResult.OK)
+    sharedFlag = await server.clientInit()
+    server.width = 65535
+    server.height = 65535
+    await server.serverInit(server.width, server.height, server.pixelFormat, 7, "Desktop")
+    
+    lastFramebufferTime = datetime.datetime.min
+    framebufferCooldown = datetime.timedelta(seconds=5)
+    # parse client messages
+    while True:
+        message_type = await read_int(server.reader, 1)
+        if message_type == 0:
+            pixelFormat = await server.setPixelFormat()
+            server.pixelFormat = pixelFormat
+            print(f"SetPixelFormat: {pixelFormat}")
+        elif message_type == 2:
+            encodings = await server.setEncodings()
+            print(f"Encodings: {encodings}")
+        elif message_type == 3:
+            incremental, x, y, w, h = await server.framebufferUpdateRequest()
+            now = datetime.datetime.now()
+            delta = now - lastFramebufferTime
+            if delta > framebufferCooldown:
+                # send random data back
+                type = 2
+                data = await generateRREData(server.width, server.height, server.pixelFormat)
+                await server.framebufferUpdate(1, [(0, 0, server.width, server.height, type)], [data], signed=False)
+                lastFramebufferTime = now
+                print("FramebufferUpdate")
+        elif message_type == 4:
+            down, key = await server.keyEvent()
+            print("KeyEvent")
+        elif message_type == 5:
+            mask, x, y = await server.pointerEvent()
+            print("PointerEvent")
+        elif message_type == 6:
+            text = await server.clientCutText()
+            print("ClientCutText")
+        else:
+            print(f"unknown message type {message_type}")
+
 
 tests = [
     overlongIntro,
     #shortIntro, # client doesnt answer
 
     securityUnderflow,
-    #securityOverflow,
+    securityOverflow,
     securityReasonUnderflow,
-    #securityReasonOverflow,
+    securityReasonOverflow,
 
-    #vncAuthChallengeUnderflow,
+    vncAuthChallengeUnderflow,
     vncAuthChallengeOverflow,
 
     securityResultReasonUnderflow,
@@ -316,5 +360,6 @@ tests = [
     setColorMapEntriesIndexOverflow,
 
     serverCutTextUnderflow,
-    serverCutTextOverflow
+    serverCutTextOverflow,
+    giantAssFramebuffer,
 ]
