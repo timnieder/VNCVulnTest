@@ -19,7 +19,7 @@ async def main():
     await client.clientInit()
     w,h,format = await client.ServerInit()
     client.pixelFormat = format
-    await client.setEncodings(2, [0, 0xFFFF8002])
+    await client.setEncodings(2, [0, 0xFFFF8002], signed=False)
     #await client.pointerEvent(0,0,0)
     await client.sendFileTransfer(FileTransferMessages.DirContentRequest, 2, 0, 0, bytes())
     # parse client messages
@@ -27,12 +27,16 @@ async def main():
         message_type = await read_int(client.reader, 1)
         if message_type == S2CMessages.FramebufferUpdate:
             update = await client.framebufferUpdate(client.pixelFormat)
+            print("framebufferupdate")
         elif message_type == S2CMessages.SetColorMapEntries:
-            encodings = await client.setColorMapEntries()
+            colormap = await client.setColorMapEntries()
+            print("setColorMapEntries")
         elif message_type == S2CMessages.Bell:
             await client.bell()
+            print("bell")
         elif message_type == S2CMessages.ServerCutText:
             text = await client.serverCutText()
+            print("servercuttext")
         elif message_type == S2CMessages.FileTransfer:
             print("FileTransfer")
             type, param, size, data = await client.fileTransfer()

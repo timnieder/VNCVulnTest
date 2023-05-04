@@ -86,7 +86,7 @@ class Client:
         msg += int(0).to_bytes(3, "big") # pixelformat padding
         self.writer.write(msg)
 
-    async def setEncodings(self, num: int, encodings: Collection[int]):
+    async def setEncodings(self, num: int, encodings: Collection[int], signed=True):
         msg = bytes()
         message_type = int(C2SMessages.SetEncodings)
         msg += message_type.to_bytes(1, "big")
@@ -94,7 +94,7 @@ class Client:
         msg += padding.to_bytes(1, "big")
         msg += num.to_bytes(2, "big")
         for encoding in encodings:
-            msg += encoding.to_bytes(4, "big", signed=True)
+            msg += encoding.to_bytes(4, "big", signed=signed)
         self.writer.write(msg)
 
     async def framebufferUpdateRequest(self, incremental:bool, x:int, y:int, w:int, h:int):
